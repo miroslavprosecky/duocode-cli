@@ -14,7 +14,7 @@ import { scan } from "./project-scanner.js";
 import { readFiles } from "./file-reader.js";
 
 /** Default token budget when none is specified. */
-const DEFAULT_TOKEN_BUDGET = 120_000;
+const DEFAULT_TOKEN_BUDGET = 80_000;
 
 /**
  * Retrieve the current git branch name, or `undefined` if not in a git repo.

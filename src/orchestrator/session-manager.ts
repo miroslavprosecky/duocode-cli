@@ -5,7 +5,7 @@ export class SessionManager {
   private codexHistory: Message[] = [];
   private maxTokens: number;
 
-  constructor(maxTokens: number = 100000) {
+  constructor(maxTokens: number = 60000) {
     this.maxTokens = maxTokens;
   }
 

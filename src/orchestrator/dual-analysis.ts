@@ -119,6 +119,9 @@ export async function runCodexReview(options: {
   };
 }
 
+/** Max characters for the formatted context (~50K tokens at 4 chars/token). */
+const MAX_CONTEXT_CHARS = 200_000;
+
 export function formatContextForPrompt(context: ProjectContext): string {
   let summary = `Project root: ${context.rootPath}\n`;
   summary += `\n### File Tree\n\`\`\`\n${context.fileTree}\n\`\`\`\n`;
@@ -133,7 +136,12 @@ export function formatContextForPrompt(context: ProjectContext): string {
   if (context.relevantFiles.length > 0) {
     summary += `\n### Key Files\n`;
     for (const file of context.relevantFiles) {
-      summary += `\n#### ${file.path}\n\`\`\`\n${file.content}\n\`\`\`\n`;
+      const entry = `\n#### ${file.path}\n\`\`\`\n${file.content}\n\`\`\`\n`;
+      if (summary.length + entry.length > MAX_CONTEXT_CHARS) {
+        summary += `\n...(${context.relevantFiles.length - context.relevantFiles.indexOf(file)} more files omitted due to context limit)\n`;
+        break;
+      }
+      summary += entry;
     }
   }
 

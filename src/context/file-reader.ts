@@ -151,10 +151,10 @@ export async function readFiles(
   let tokensUsed = 0;
 
   for (const entry of sized) {
-    // Quick estimate: if even the raw byte size exceeds the remaining budget
-    // by a large margin, skip reading entirely.
+    // Quick estimate: if even the raw byte size exceeds the remaining budget,
+    // skip reading entirely.
     const estimatedTokens = Math.ceil(entry.size / CHARS_PER_TOKEN);
-    if (tokensUsed + estimatedTokens > tokenBudget && result.length > 0) {
+    if (tokensUsed + estimatedTokens > tokenBudget) {
       logger.debug(
         `Skipping ${entry.path} (estimated ${estimatedTokens} tokens would exceed budget).`,
       );
@@ -173,7 +173,7 @@ export async function readFiles(
       const content = buffer.toString("utf-8");
       const tokens = estimateTokens(content);
 
-      if (tokensUsed + tokens > tokenBudget && result.length > 0) {
+      if (tokensUsed + tokens > tokenBudget) {
         logger.debug(
           `Token budget reached; skipping ${entry.path} (${tokens} tokens).`,
         );

@@ -15,6 +15,11 @@ export class CodexAdapter extends BaseModel {
     this.client = new OpenAI({ apiKey });
   }
 
+  /** Models that require the Responses API instead of Chat Completions */
+  private get usesResponsesApi(): boolean {
+    return /codex/i.test(this.modelId);
+  }
+
   /** Newer models (o-series, gpt-5+) require max_completion_tokens instead of max_tokens */
   private tokenLimit(n: number): { max_tokens?: number; max_completion_tokens?: number } {
     const usesNew = /^(o[1-9]|gpt-5)/.test(this.modelId);
@@ -22,6 +27,10 @@ export class CodexAdapter extends BaseModel {
   }
 
   async chat(options: ModelOptions): Promise<ModelResponse> {
+    if (this.usesResponsesApi) {
+      return this.chatResponses(options);
+    }
+
     return withRetry(async () => {
       const messages = this.toOpenAIMessages(options.systemPrompt, options.messages);
 
@@ -50,6 +59,93 @@ export class CodexAdapter extends BaseModel {
     }, { provider: 'openai' });
   }
 
+  // ─── Responses API ──────────────────────────────────────────────────────────
+
+  private async chatResponses(options: ModelOptions): Promise<ModelResponse> {
+    return withRetry(async () => {
+      const input = this.toResponsesInput(options.messages);
+
+      if (options.stream && options.onStream) {
+        return this.chatResponsesStream(input, options);
+      }
+
+      const response = await this.client.responses.create({
+        model: this.modelId,
+        instructions: options.systemPrompt,
+        input,
+        max_output_tokens: options.maxTokens ?? 4096,
+        temperature: options.temperature ?? 0,
+      });
+
+      return {
+        content: response.output_text ?? '',
+        toolCalls: [],
+        tokenUsage: {
+          input: response.usage?.input_tokens ?? 0,
+          output: response.usage?.output_tokens ?? 0,
+          total: (response.usage?.input_tokens ?? 0) + (response.usage?.output_tokens ?? 0),
+        },
+        stopReason: response.status === 'completed' ? 'stop' : (response.status ?? 'stop'),
+      };
+    }, { provider: 'openai' });
+  }
+
+  private async chatResponsesStream(
+    input: OpenAI.Responses.ResponseInputItem[],
+    options: ModelOptions,
+  ): Promise<ModelResponse> {
+    const stream = await this.client.responses.create({
+      model: this.modelId,
+      instructions: options.systemPrompt,
+      input,
+      max_output_tokens: options.maxTokens ?? 4096,
+      temperature: options.temperature ?? 0,
+      stream: true,
+    });
+
+    let content = '';
+    let inputTokens = 0;
+    let outputTokens = 0;
+
+    for await (const event of stream) {
+      if (event.type === 'response.output_text.delta') {
+        const delta = (event as any).delta ?? '';
+        if (delta) {
+          content += delta;
+          options.onStream?.({ type: 'text', content: delta });
+        }
+      }
+      if (event.type === 'response.completed') {
+        const usage = (event as any).response?.usage;
+        if (usage) {
+          inputTokens = usage.input_tokens ?? 0;
+          outputTokens = usage.output_tokens ?? 0;
+        }
+      }
+    }
+
+    return {
+      content,
+      toolCalls: [],
+      tokenUsage: { input: inputTokens, output: outputTokens, total: inputTokens + outputTokens },
+      stopReason: 'stop',
+    };
+  }
+
+  private toResponsesInput(messages: Message[]): OpenAI.Responses.ResponseInputItem[] {
+    const result: OpenAI.Responses.ResponseInputItem[] = [];
+    for (const m of messages) {
+      if (m.role === 'system') continue;
+      result.push({
+        role: m.role as 'user' | 'assistant',
+        content: m.content,
+      } as OpenAI.Responses.ResponseInputItem);
+    }
+    return result;
+  }
+
+  // ─── Shared methods ─────────────────────────────────────────────────────────
+
   async chatWithToolLoop(
     options: ModelOptions,
     executeToolCall: (toolCall: ToolCall) => Promise<ToolResult>,
@@ -74,11 +170,19 @@ export class CodexAdapter extends BaseModel {
 
   async validateApiKey(): Promise<boolean> {
     try {
-      await this.client.chat.completions.create({
-        model: this.modelId,
-        ...this.tokenLimit(10),
-        messages: [{ role: 'user', content: 'Hello' }],
-      });
+      if (this.usesResponsesApi) {
+        await this.client.responses.create({
+          model: this.modelId,
+          input: 'Hello',
+          max_output_tokens: 10,
+        });
+      } else {
+        await this.client.chat.completions.create({
+          model: this.modelId,
+          ...this.tokenLimit(10),
+          messages: [{ role: 'user', content: 'Hello' }],
+        });
+      }
       return true;
     } catch (error) {
       const classified = classifyError(error, 'openai');

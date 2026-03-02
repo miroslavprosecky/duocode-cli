@@ -4,7 +4,6 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D18-green)](https://nodejs.org)
-[![Windows](https://img.shields.io/badge/Platform-Windows-blue)](https://github.com/miroslavprosecky/duocode-cli/releases)
 
 DuoCode pairs two AI models to write better code. **Claude** (Anthropic) acts as the implementor — it analyzes your codebase, writes code, and uses tools. **Codex/GPT** (OpenAI) acts as the supervisor — it reviews every step and catches issues before they land.
 
@@ -19,6 +18,7 @@ DuoCode pairs two AI models to write better code. **Claude** (Anthropic) acts as
 - **Change rollback** — undo all changes from the current session (even without git)
 - **Token budget** — respects context window limits automatically
 - **Setup wizard** — interactive configuration on first run
+- **Self-update** — `duocode update` or `/update` to update to the latest version
 - **Standalone .exe** — no Node.js installation required
 
 ## Installation
@@ -72,6 +72,12 @@ duocode ask "Explain the authentication flow" --no-implement
 | `-s, --supervision <mode>` | `issues-only` (default), `always`, or `never` |
 | `--no-implement` | Analyze only, skip implementation |
 
+### Update
+
+```bash
+duocode update   # check for updates and install
+```
+
 ### Interactive REPL
 
 ```bash
@@ -95,6 +101,7 @@ Type your prompt and DuoCode will analyze, plan, implement, and review — all i
 | `/review` | Review current git diff |
 | `/commit` | Commit current changes |
 | `/rollback` | Undo changes from this session |
+| `/update` | Check for updates and install |
 | `/clear` | Clear conversation history |
 | `/exit` | Exit DuoCode |
 

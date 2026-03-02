@@ -1,0 +1,6 @@
+{
+  "main": "build/duocode-bundled.cjs",
+  "output": "build/sea-prep.blob",
+  "disableExperimentalSEAWarning": true,
+  "useCodeCache": true
+}

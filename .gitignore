@@ -7,5 +7,6 @@ build/
 ~/.duocode/
 *.log
 .claude/
+CLAUDE.md
 test*.txt
 _neverejne/

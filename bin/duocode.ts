@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 
 import { createCLI } from '../src/cli.js';
+import { VERSION } from '../src/version.js';
 
-const program = createCLI('0.1.0');
+const program = createCLI(VERSION);
 
 process.on('SIGINT', () => {
   console.log('\nGracefully shutting down...');

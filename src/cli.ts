@@ -23,6 +23,14 @@ export function createCLI(version: string): Command {
       });
     });
 
+  program
+    .command('update')
+    .description('Update DuoCode to the latest version')
+    .action(async () => {
+      const { runUpdate } = await import('./updater.js');
+      await runUpdate();
+    });
+
   // Default: interactive REPL
   program
     .option('-v, --verbose', 'Enable debug logging')

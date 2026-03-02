@@ -253,6 +253,12 @@ export class DuoCode {
         await this.handleCommit();
         break;
 
+      case '/update': {
+        const { runUpdate } = await import('./updater.js');
+        await runUpdate();
+        break;
+      }
+
       case '/clear':
         this.sessionManager.clear();
         printSuccess('Conversation history cleared');
@@ -276,6 +282,7 @@ export class DuoCode {
       `${chalk.cyan('/review')}          Review current git diff`,
       `${chalk.cyan('/commit')}          Commit current changes`,
       `${chalk.cyan('/rollback')}        Undo changes from this session`,
+      `${chalk.cyan('/update')}          Check for updates`,
       `${chalk.cyan('/clear')}           Clear conversation history`,
       `${chalk.cyan('/exit')}            Exit DuoCode`,
     ].join('\n'));

@@ -27,13 +27,6 @@ DuoCode pairs two AI models to write better code. **Claude** (Anthropic) acts as
 
 Download `duocode-installer.exe` from the [latest release](https://github.com/miroslavprosecky/duocode-cli/releases) and run it. It installs to Program Files and adds `duocode` to your PATH.
 
-Or via PowerShell:
-
-```powershell
-irm https://www.prosecky.cz/duocode-installer.exe -OutFile "$env:TEMP\duocode-installer.exe"
-& "$env:TEMP\duocode-installer.exe"
-```
-
 ### Standalone executable
 
 Download `duocode.exe` from [releases](https://github.com/miroslavprosecky/duocode-cli/releases) and place it anywhere in your PATH.
